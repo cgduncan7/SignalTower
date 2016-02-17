@@ -1,38 +1,27 @@
-# import RPi.GPIO as GPIO
-
-from ..properties.constant import CONSTANT
-
-# Holds constants for each module; replace
-class Modules(object):
-
-	@CONSTANT
-	def GREEN_LIGHT():
-		return "GREEN_LIGHT"
-
-	@CONSTANT
-	def GREEN_LIGHT_GPIO_PORT():
-		return 1
-
-	@CONSTANT
-	def RED_LIGHT():
-		return "RED_LIGHT"
-
-	@CONSTANT
-	def RED_LIGHT_GPIO_PORT():
-		return 2
-	
-	@CONSTANT
-	def SIREN():
-		return "SIREN"
-
-	@CONSTANT
-	def SIREN_GPIO_PORT():
-		return 3
+from gpiozero import OutputDevice
 
 class Driver(object):
 	"""
 	Driver for siren modules; receives commands from SignalTowerServer
 	"""
-	def __init__(self):
+	def __init__(self, green_pin, red_pin, siren_pin):
 		super(Driver, self).__init__()
-		self.modules = SirenModules()
+		self.green_light = OutputDevice(green_pin)
+		self.red_light = OutputDevice(red_pin)
+		self.siren = OutputDevice(siren_pin)
+
+	def exec_instr(self, instruction):
+		if instruction[0]:
+			self.green_light.on()
+		else:
+			self.green_light.off()
+
+		if instruction[1]:
+			self.red_light.on()
+		else:
+			self.red_light.off()
+
+		if instruction[2]:
+			self.siren.on()
+		else:
+			self.siren.off()

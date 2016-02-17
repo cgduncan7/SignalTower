@@ -1,6 +1,7 @@
 import socket
 import sys
 import time
+import re
 
 class Server(object):
 	"""
@@ -8,10 +9,11 @@ class Server(object):
 	the Signal Tower.
 	"""
 	
-	def __init__(self, host, port, verbose):
+	def __init__(self, host, port, driver, verbose):
 		super(Server, self).__init__()
 		self.host = host
 		self.port = port
+		self.driver = driver
 		self.verbose = verbose
 		self.address = (host, port)
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -104,11 +106,24 @@ class Server(object):
 
 	# Parses the messages from client and acts accordingly
 	def parse(self, message):
-		if message == "disconnect":
+		m = re.search('i:(\w+)', message)
+		if m is not None:
+			self.parse_instruction(m.group(1))
+		elif message == "disconnect":
 			self.disconnect_client()
 		else:
 			self.echo(message)
 
+	def parse_instruction(self, instruction):
+		green_instr, red_instr, siren_instr = list(instruction)
+		
+		parsed_instruction = (
+			green_instr == 'G',
+			red_instr == 'R',
+			siren_instr == 'S'
+		)
+
+		self.driver.queue_instruction(parsed_instruction)
 		
 	def start(self):
 		self.bind(self.socket, self.address)
@@ -116,8 +131,8 @@ class Server(object):
 
 		while self.conn is not None:
 			message = self.recv(self.conn, 2048)
-			self.ack_client()
 			self.parse(message)
+			self.ack_client()
 		
 # OLD::
 # HOST, PORT = "localhost", 9999
